@@ -29,7 +29,8 @@
  * need a height of four to cover all of my characters in the alphabet, so we will use a four
  * byte int array, as shown below.
  */
-#define BUTTON_PIN 2
+#define DOT_BUTTON 2
+#define DASH_BUTTON 3
 #define DOT 0
 #define DASH 1
 #define MORSE_HEIGHT 4
@@ -51,7 +52,7 @@
 #define SS_START 6
 #define SS_END 13
 #define SS_CHAR_A 0x77
-#define SS_CHAR_B 0x78
+#define SS_CHAR_B 0x7C
 #define SS_CHAR_C 0x39
 #define SS_CHAR_D 0x5E
 #define SS_CHAR_E 0x79
@@ -59,12 +60,12 @@
 #define SS_CHAR_G 0x7D
 #define SS_CHAR_H 0x76
 #define SS_CHAR_I 0x30
-#define SS_CHAR_J 0x1E
+#define SS_CHAR_J 0x0E
 #define SS_CHAR_K 0x70
 #define SS_CHAR_L 0x38
-#define SS_CHAR_M 0x64
-#define SS_CHAR_N 0x52
-#define SS_CHAR_O 0x3F
+#define SS_CHAR_M 0x37
+#define SS_CHAR_N 0x54
+#define SS_CHAR_O 0x5C
 #define SS_CHAR_P 0x73
 #define SS_CHAR_Q 0xBF
 #define SS_CHAR_R 0x31
@@ -72,9 +73,9 @@
 #define SS_CHAR_T 0x78
 #define SS_CHAR_U 0x1C
 #define SS_CHAR_V 0x3E
-#define SS_CHAR_W 0xBE
-#define SS_CHAR_X 0x49
-#define SS_CHAR_Y 0x6E
+#define SS_CHAR_W 0x7E
+#define SS_CHAR_X 0x40
+#define SS_CHAR_Y 0x6F
 #define SS_CHAR_Z 0x5B
 #define SS_CHAR_0 0x80
 
@@ -116,7 +117,8 @@
 #define M_CHAR_Z 0x0C
 
 //I prefer to begin all of my global vars with "g_" so I can easily tell
-volatile bool g_button_state = 0;
+volatile bool g_dot_button;
+volatile bool g_dash_button;
 char g_morse;
 char g_mlen;
 
@@ -227,18 +229,28 @@ char encode(char let, char len){
 void setup(){
 	int i; //Used for setting up all pins for our seven seg
 
-	pinMode(BUTTON_PIN, INPUT);
+	pinMode(DOT_BUTTON, INPUT);
+	pinMode(DASH_BUTTON, INPUT);
 	for(i = SS_START; i <= SS_END; i++)
 		pinMode(i, OUTPUT);
 	
+	g_dot_button = 0;
+	g_dash_button = 0;
 	g_morse = 0;
 	g_mlen = 0;
 	SET_SS(SS_CHAR_0);
 }
 
+/*
+ * We have to be very careful with our delays! I wanted to do this as a fsm,
+ * but having delays inline will cause problems. You could always set up an
+ * interrupt (not sure if the UNO has an interrupt vector table), but this
+ * would be a bit too much work for this type of project, so let's keep it as
+ * simple as we can.
+ */
 void loop(){
-	g_button_state = digitalRead(BUTTON_PIN);
-	if(g_button_state){ //Active high
+	g_dot_button = digitalRead(DOT_BUTTON);
+	if(g_dot_button){
 		char morse_char;
 
 		//If we maxed out morse code character, reset and then start
@@ -248,22 +260,25 @@ void loop(){
 
 		morse_char = decode(g_morse);
 
-		/*
-		 * We have to be very careful with our delays! I wanted to do this as a fsm,
-		 * but having delays inline will cause problems. You could always set up an
-		 * interrupt (not sure if the UNO has an interrupt vector table), but this
-		 * would be a bit too much work for this type of project, so let's keep it as
-		 * simple as we can.
-		 */
-		while(g_button_state){
-			//Something to differentiate between dot and dash input? 
-		}
+		delay(250); //Let's give the user some time to let go of the button
+		morse_char = (morse_char << 1) + DOT;
+		g_morse = encode(morse_char, ++g_mlen);
+		SET_SS(g_morse);
+	}
 
-		if(g_button_state) //This would mean that it's still pressed, so dash
-			morse_char = morse_char << 1 + 1;
-		else
-			morse_char <<= 1;
+	g_dash_button = digitalRead(DASH_BUTTON);
+	if(g_dash_button){
+		char morse_char;
 
+		//If we maxed out morse code character, reset and then start
+		//This is my only solution to resetting your char :(
+		if(g_mlen == MORSE_HEIGHT)
+			g_mlen = 0;
+
+		morse_char = decode(g_morse);
+
+		delay(250);
+		morse_char = (morse_char << 1) + DASH;
 		g_morse = encode(morse_char, ++g_mlen);
 		SET_SS(g_morse);
 	}
