@@ -68,7 +68,7 @@
 #define SS_CHAR_P 0x73
 #define SS_CHAR_Q 0xBF
 #define SS_CHAR_R 0x31
-#define SS_CHAR_S 0x6C
+#define SS_CHAR_S 0x6D
 #define SS_CHAR_T 0x78
 #define SS_CHAR_U 0x1C
 #define SS_CHAR_V 0x3E
@@ -127,9 +127,9 @@ char g_mlen;
  * each bit with the logical AND. This is done with the ternary operator, which either sets the
  * pin to HIGH or LOW.
  */
-#define SET_SS(C, L) {									\
-		int _i, _j;								\
-		for(_i = SS_START; _i < L; _i++){					\
+#define SET_SS(C) {									\
+		int _i, _j = 1;								\
+		for(_i = SS_START; _i <= SS_END; _i++){					\
 			(C & _j) ? digitalWrite(_i, HIGH) : digitalWrite(_i, LOW);	\
 			_j <<= 1;}}
 
@@ -233,20 +233,18 @@ void setup(){
 	
 	g_morse = 0;
 	g_mlen = 0;
-	SET_SS(SS_CHAR_0, MORSE_LENGTH);
+	SET_SS(SS_CHAR_0);
 }
 
 void loop(){
 	g_button_state = digitalRead(BUTTON_PIN);
-	if(!g_button_state){ //Active high
+	if(g_button_state){ //Active high
 		char morse_char;
 
 		//If we maxed out morse code character, reset and then start
 		//This is my only solution to resetting your char :(
-		if(g_mlen == MORSE_HEIGHT){
-			SET_SS(SS_CHAR_0, MORSE_LENGTH);
+		if(g_mlen == MORSE_HEIGHT)
 			g_mlen = 0;
-		}
 
 		morse_char = decode(g_morse);
 
@@ -257,14 +255,16 @@ void loop(){
 		 * would be a bit too much work for this type of project, so let's keep it as
 		 * simple as we can.
 		 */
-		delay(250);
-		if(!g_button_state) //This would mean that it's still pressed, so dash
+		while(g_button_state){
+			//Something to differentiate between dot and dash input? 
+		}
+
+		if(g_button_state) //This would mean that it's still pressed, so dash
 			morse_char = morse_char << 1 + 1;
 		else
 			morse_char <<= 1;
-		delay(250);
 
 		g_morse = encode(morse_char, ++g_mlen);
-		SET_SS(g_morse, g_mlen);
+		SET_SS(g_morse);
 	}
 }
