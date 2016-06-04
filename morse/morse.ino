@@ -75,7 +75,7 @@
 #define SS_CHAR_V 0x3E
 #define SS_CHAR_W 0x7E
 #define SS_CHAR_X 0x40
-#define SS_CHAR_Y 0x6F
+#define SS_CHAR_Y 0x6E
 #define SS_CHAR_Z 0x5B
 #define SS_CHAR_0 0x80
 
