@@ -22,12 +22,12 @@
 // Global variables and macros
 //==============================================================================================
 /*
- * My button input is mapped to pin 2 on the UNO, and my seven segment LED pins are mapped from
- * pins 7 to 13. I will use these for simplicity of my code, as seen in morse.ino.
+ * My buttons input are mapped to pins 2 and 3 on the UNO, and my seven segment LED pins are
+ * mapped from pins 6 to 13. I will use these for simplicity of my code, as seen in morse.ino.
  *
  * Also, I prefer looking at the binary tree for my morse encoder (.png file attached), and I
- * need a height of four to cover all of my characters in the alphabet, so we will use a four
- * byte int array, as shown below.
+ * need a height of four to cover all of my characters in the alphabet, so we will use the last
+ * four bits in the char variable, as seen below.
  */
 #define DOT_BUTTON 2
 #define DASH_BUTTON 3
@@ -140,7 +140,7 @@ char g_mlen;
 //==============================================================================================
 //Using a SS char, return the appropriate M char
 char decode(char byt){
-	//Is there an algorithmic way to do this? Probably if I set my pins on SS differently
+	//Is there an algorithmic way to do this? Maybe, if I set my pins on SS differently
 	if(byt == SS_CHAR_A) return M_CHAR_A;
 	if(byt == SS_CHAR_B) return M_CHAR_B;
 	if(byt == SS_CHAR_C) return M_CHAR_C;
